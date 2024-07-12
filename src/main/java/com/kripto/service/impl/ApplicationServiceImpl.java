@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
@@ -29,23 +30,23 @@ public class ApplicationServiceImpl implements ApplicationService {
     public List<String> getOptimizationSuggestions() {
         List<Application> applications = applicationRepository.findAll();
 
-        // Si la aplicacion ya esta obsoleta
-        List<String> suggestions = applications.stream()
+        // Sugerencias para aplicaciones obsoletas
+        List<String> obsoleteSuggestions = applications.stream()
                 .filter(Application::isObsolete)
-                .map(app -> "Considerar remover aplicacion obsoleta: " + app.getName())
+                .map(app -> "Considerar remover aplicación obsoleta: " + app.getName())
                 .collect(Collectors.toList());
 
-        // Si la aplicacion se repite por nombres
-        List<String> redundantApps = applications.stream()
+        // Sugerencias para aplicaciones redundantes
+        List<String> redundantSuggestions = applications.stream()
                 .collect(Collectors.groupingBy(Application::getName, Collectors.counting()))
                 .entrySet().stream()
                 .filter(entry -> entry.getValue() > 1)
-                .map(entry -> "Considerar remover aplicacion de nombre ya existente: " + entry.getKey())
+                .map(entry -> "Considerar remover aplicación de nombre ya existente: " + entry.getKey())
                 .collect(Collectors.toList());
 
-        suggestions.addAll(redundantApps);
-
-        return suggestions;
+        // Combinar ambas listas de sugerencias
+        return Stream.concat(obsoleteSuggestions.stream(), redundantSuggestions.stream())
+                .collect(Collectors.toList());
     }
 
     @Override
